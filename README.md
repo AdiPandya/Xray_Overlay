@@ -10,7 +10,7 @@ To overlay the X-ray images on the Optical images, basic requirements are:
 The steps to overlay are as follows:
 
 1. Astrometric Calibration of Optical Data:
-    - If the optical data is in fits format, it should have the correct WCS information. If the optical data is in image format, one needs to use the \[astrometry.net\](https://nova.astrometry.net/upload) webpage to get the WCS information. Upload the image and once the astrometric calibration is done, download the fits file with the WCS information or just the WCS information as a fits file. For the purpose of this work, only the WCS information will be used.
+    - If the optical data is in fits format, it should have the correct WCS information. If the optical data is in image format, one needs to use the [astrometry.net](https://nova.astrometry.net/upload) webpage to get the WCS information. Upload the image and once the astrometric calibration is done, download the fits file with the WCS information or just the WCS information as a fits file. For the purpose of this work, only the WCS information will be used.
 2. Align the X-ray data with the Optical data:
     - Use the script `Align.py` to align the X-ray data with the Optical data. The script uses the WCS information of the Optical data to align the X-ray data. The script can takes 4 arguments:
         - The path to the X-ray data fits file.
