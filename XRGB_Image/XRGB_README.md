@@ -1,5 +1,4 @@
 # Xray Overlay Guide
--by Aditya Pandya
 
 Guide for making X-ray overlay on the Optical Images. Read the instruction below to get started.
 
