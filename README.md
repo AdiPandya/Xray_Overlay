@@ -1,4 +1,6 @@
-# Xray_Overlay
+# Xray Overlay Guide
+-by Aditya Pandya
+
 Guide for making X-ray overlay on the Optical Images. Read the instruction below to get started.
 
 To overlay the X-ray images on the Optical images, basic requirements are:
@@ -28,3 +30,8 @@ The steps to overlay are as follows:
     - Open the X-ray image as a new layer.
     - Follow the steps in the `Image_overlay_tutorial.ipynb` to make the overlay.
     - Save the overlayed image as a .tiff/.png/.jpg file.
+
+### Acknowledgement:
+- The `Image_overlay_tutorial.ipynb` is created with the help of the guide available at: https://chandra.harvard.edu/photo/openFITS/
+- The x-ray data used in the tutorial is from the Chandra X-ray Observatory. The data is created to NASA/CXC/Wesleyan Univ./R.Kilgard, et al
+- The optical data used in the tutorial is from the Hubble Space Telescope. The data is created to NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)
