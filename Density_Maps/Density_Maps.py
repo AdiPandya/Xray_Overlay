@@ -149,4 +149,13 @@ if method==1:
     # Save the density map as a FITS file
     hdu = fits.PrimaryHDU(density.T, ref_image.header)
     hdu.writeto(output_file, overwrite=True)
+    print('Density map saved as', output_file)
+    
+    if wavelet_exp_map:
+        exp = np.ones(output_map_shape)
+        hdu_exp = fits.PrimaryHDU(exp.T, ref_image.header)
+        hdu_exp.writeto(output_file.replace('.fits', '_exp.fits'), overwrite=True)
+        print('Exposure map saved as', output_file.replace('.fits', '_exp.fits'))
+    
+    print('Done')
     
