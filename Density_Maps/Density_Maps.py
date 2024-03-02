@@ -8,22 +8,19 @@ import sys
 from tqdm import tqdm
 import argparse
 
-# Create the parser
 parser = argparse.ArgumentParser(description="Process some integers.")
 
-# Add the arguments
-parser.add_argument('-method', type=int, help='The method to use')
-parser.add_argument('-data_file', type=str, help='The data file')
-parser.add_argument('-output_file', type=str, help='The output file')
-parser.add_argument('-step', type=float, help='The step size for the grid in degrees', default=1.0)
-parser.add_argument('-margin', type=float, help='The margin to add to the grid in percentage', default=10.0)
+# Adding the arguments
+parser.add_argument('-method', type=int, help='The method to use. 0 for making a density map from scratch, 1 for using an X-ray FITS file grid.')
+parser.add_argument('-data_file', type=str, help='The data file in CSV format containing the RA and Dec of the galaxies as "ra" and "dec" respectively.')
+parser.add_argument('-output_file', type=str, help='The output file in FITS format to save the density map.')
+parser.add_argument('-step', type=float, help='The step size for the grid in degrees (only for method 0).')
+parser.add_argument('-margin', type=float, help='The margin to add to the grid in percentage (only for method 0 and default 10 percentage)', default=10.0)
 parser.add_argument('-xray_fits', type=str, help='The X-ray FITS file to use for creating the density map', default=None)
 parser.add_argument('-wavelet_exp_map', type=bool, help='Whether to create exposure map for the wavelet filtering or not', default=False)
-
-# Parse the arguments
 args = parser.parse_args()
 
-# Access the arguments
+# Accessing the arguments
 method = args.method
 data_file = args.data_file
 output_file = args.output_file
@@ -32,10 +29,12 @@ margin = args.margin
 xray_fits = args.xray_fits
 wavelet_exp_map = args.wavelet_exp_map
 
-if data_file==None:
-    print('ERROR: Please provide the data file') 
-    if output_file==None:
-        print('ERROR: Please provide the output file name.')
+if method==None:
+    print('ERROR: Please provide the method to use. 0 for making a density map from scratch, 1 for using an X-ray FITS file grid.')
+    sys.exit()
+
+if data_file==None or output_file==None:
+    print('ERROR: Please provide the data file and the output file name.')
     sys.exit()
 
 df = pd.read_csv(data_file)
