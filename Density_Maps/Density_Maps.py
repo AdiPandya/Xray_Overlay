@@ -32,19 +32,21 @@ margin = args.margin
 xray_fits = args.xray_fits
 wavelet_exp_map = args.wavelet_exp_map
 
-if data_file==None & output_file==None:
-    print('Please provide the data file and the output file name.')
+if data_file==None:
+    print('ERROR: Please provide the data file') 
+    if output_file==None:
+        print('ERROR: Please provide the output file name.')
     sys.exit()
 
 df = pd.read_csv(data_file)
 if 'ra' not in df.columns:
-    print('Please provide the RA and Dec columns in the data file as "ra" and "dec" respectively.')
+    print('ERROR: Please provide the RA and Dec columns in the data file as "ra" and "dec" respectively.')
     sys.exit()
 
 
 if method==0:
     if step==None:
-        print('Please provide the step size.')
+        print('ERROR: Please provide the step size.')
         sys.exit()
     if margin==None:
         print('Using default margin of 10%')
@@ -101,7 +103,7 @@ if method==0:
 
 if method==1:
     if xray_fits==None:
-        print('Please provide the X-ray FITS file.')
+        print('ERROR: Please provide the X-ray FITS file.')
         sys.exit()
     # Open the xray FITS file
     ref_image = fits.open(xray_fits)[0]
