@@ -5,16 +5,16 @@ The notebook [Density_Maps_tutorial.ipynb](Density_Maps_tutorial.ipynb) contains
 Differnt methods are mentioned in the notebook to create the density maps. A scipt version of the notebook is available as [Density_Maps.py](Density_Maps.py).
 
 The script takes several arguments to create the density maps. The arguments are:
--method : The method to use. 0 for making a density map from scratch, 1 for using an X-ray FITS file grid.
--data_file : The data file in CSV format containing the RA and Dec of the galaxies as "ra" and "dec" respectively.
+-method : The method to use. 0 for making a density map from scratch, 1 for using an X-ray FITS file grid. \
+-data_file : The data file in CSV format containing the RA and Dec of the galaxies as "ra" and "dec" respectively. \
 -output_file : The output file in FITS format to save the density map.
 
--step : The step size for the grid in degrees (only for method 0).
+-step : The step size for the grid in degrees (only for method 0). \
 -xray_fits : The X-ray FITS file to use for creating the density map (only for method 1)
 
 Optional arguments:
--margin : The margin to add to the grid in percentage (only for method 0 and default 10 percentage)
--wavelet_exp_map : Whether to create exposure map for the wavelet filtering or not (only for method 1 and default False)
+-margin : The margin to add to the grid in percentage (only for method 0 and default 10 percentage) \
+-wavelet_exp_map : Whether to create exposure map for the wavelet filtering or not (only for method 1 and default False) \
 -extent : The extent of the box in terms of pixels (only for method 1 and default 1 pixel)
 
 The script can be run as:
