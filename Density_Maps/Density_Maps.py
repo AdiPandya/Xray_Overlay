@@ -8,6 +8,9 @@ import sys
 from tqdm import tqdm
 import argparse
 
+import warnings # To suppress the warnings from astropy header
+warnings.filterwarnings("ignore")
+
 parser = argparse.ArgumentParser(description="Process some integers.")
 
 # Adding the arguments
@@ -18,6 +21,7 @@ parser.add_argument('-step', type=float, help='The step size for the grid in deg
 parser.add_argument('-margin', type=float, help='The margin to add to the grid in percentage (only for method 0 and default 10 percentage)', default=10.0)
 parser.add_argument('-xray_fits', type=str, help='The X-ray FITS file to use for creating the density map', default=None)
 parser.add_argument('-wavelet_exp_map', type=bool, help='Whether to create exposure map for the wavelet filtering or not', default=False)
+parser.add_argument('-extent', type=int, help='The extent of the box in terms of pixels', default=1)
 args = parser.parse_args()
 
 # Accessing the arguments
@@ -28,6 +32,7 @@ step = args.step
 margin = args.margin
 xray_fits = args.xray_fits
 wavelet_exp_map = args.wavelet_exp_map
+extent = args.extent
 
 if method==None:
     print('ERROR: Please provide the method to use. 0 for making a density map from scratch, 1 for using an X-ray FITS file grid.')
@@ -38,11 +43,37 @@ if data_file==None or output_file==None:
     sys.exit()
 
 df = pd.read_csv(data_file)
-if 'ra' not in df.columns:
+if 'ra' not in df.columns or 'dec' not in df.columns:
     print('ERROR: Please provide the RA and Dec columns in the data file as "ra" and "dec" respectively.')
     sys.exit()
 
 
+def get_box_coord(pix_ra, pix_dec, image_wcs, ext=extent):
+    """
+    This function calculates the coordinates of a box around a pixel in an image.
+        
+    Parameters:
+    pix_ra (float): Pixel coordinate in the x-axis.
+    pix_dec (float): Pixel coordinate in the y-axis.
+    image_wcs (astropy.wcs.WCS): WCS of the image.
+    ext (int): Extent of the box in terms of pixels.
+        
+    Returns:
+    tuple: A tuple containing the coordinates of the box (ra_prev, dec_prev, ra_next, dec_next).
+    """
+    ra_next = image_wcs.pixel_to_world(pix_ra+(ext/2), pix_dec).ra.value
+    dec_next = image_wcs.pixel_to_world(pix_ra, pix_dec+(ext/2)).dec.value
+    ra_prev = image_wcs.pixel_to_world(pix_ra-(ext/2), pix_dec).ra.value
+    dec_prev = image_wcs.pixel_to_world(pix_ra, pix_dec-(ext/2)).dec.value
+    
+    # Sometimes the coordinates are in decrasing order, so we need to swap them
+    if ra_next < ra_prev:
+        ra_next, ra_prev = ra_prev, ra_next
+    if dec_next < dec_prev:
+        dec_next, dec_prev = dec_prev, dec_next
+    return ra_prev, dec_prev, ra_next, dec_next
+
+############################ Code for method 0 ############################
 if method==0:
     if step==None:
         print('ERROR: Please provide the step size.')
@@ -62,15 +93,12 @@ if method==0:
     ra_size, dec_size = grid_ra.shape[0], grid_dec.shape[0]
     
     w = wcs.WCS(naxis=2)
-    # First we add the projection type
-    w.wcs.ctype = ["RA---SIN", "DEC--SIN"]
-    # Then the units of the coordinates
-    w.wcs.cunit = ["deg", "deg"]
-    # Now we set the center/reference pixel of the grid
-    w.wcs.crpix = [ra_size/2, dec_size/2] 
-    # This sets the value of the reference pixel in the same units as the coordinates
-    w.wcs.crval = [grid_ra[int(ra_size/2)], grid_dec[int(dec_size/2)]]
-    # This is the pixel scale in degrees. We take the difference between two adjacent pixels in the grid 
+    
+    w.wcs.ctype = ["RA---SIN", "DEC--SIN"] # projection type
+    w.wcs.cunit = ["deg", "deg"] # units of the coordinates
+    w.wcs.crpix = [ra_size/2, dec_size/2] # center/reference pixel of the grid
+    w.wcs.crval = [grid_ra[int(ra_size/2)], grid_dec[int(dec_size/2)]] # the value of the reference pixel in the same units as the coordinates
+    # Next is the pixel scale in degrees. We take the difference between two adjacent pixels in the grid 
     w.wcs.cdelt = np.array([(grid_ra[int(ra_size/2)]-grid_ra[int(ra_size/2)+1]), (grid_dec[int(dec_size/2)+1]-grid_dec[int(dec_size/2)])])
     
     # To add the size of the grid to the header
@@ -100,6 +128,7 @@ if method==0:
     print('Density map saved as', output_file)
     print('Done')
 
+############################ Code for method 1 ############################
 if method==1:
     if xray_fits==None:
         print('ERROR: Please provide the X-ray FITS file.')
@@ -109,43 +138,30 @@ if method==1:
     ref_wcs = wcs.WCS(ref_image.header)
     
     output_map_shape = (ref_image.header['NAXIS1'], ref_image.header['NAXIS2'])
-    print('The output density map will have dimension of:', output_map_shape)
+    print('The output density map will have dimension of:', output_map_shape)    
     
-    def get_box_coord(pix_ra, pix_dec, image_wcs, ext=1):
-        """
-        This function calculates the coordinates of a box around a pixel in an image.
-        
-        Parameters:
-        pix_ra (float): Pixel coordinate in the x-axis.
-        pix_dec (float): Pixel coordinate in the y-axis.
-        image_wcs (astropy.wcs.WCS): WCS of the image.
-        ext (int): Extent of the box in terms of pixels.
-        
-        Returns:
-        tuple: A tuple containing the coordinates of the box (ra_prev, dec_prev, ra_next, dec_next).
-        """
-        ra_next = image_wcs.pixel_to_world(pix_ra+(ext/2), pix_dec).ra.value
-        dec_next = image_wcs.pixel_to_world(pix_ra, pix_dec+(ext/2)).dec.value
-        ra_prev = image_wcs.pixel_to_world(pix_ra-(ext/2), pix_dec).ra.value
-        dec_prev = image_wcs.pixel_to_world(pix_ra, pix_dec-(ext/2)).dec.value
-        
-        # Sometimes the coordinates are in decrasing order, so we need to swap them
-        if ra_next < ra_prev:
-            ra_next, ra_prev = ra_prev, ra_next
-        if dec_next < dec_prev:
-            dec_next, dec_prev = dec_prev, dec_next
-        return ra_prev, dec_prev, ra_next, dec_next
     print('Creating the density map...')
     density = np.zeros(output_map_shape)
+    outside = 0 # Counter for the galaxies outside the xray image
     for i in tqdm(range(len(df))):
         app_ra, app_dec = ref_wcs.world_to_pixel_values(df['ra'][i], df['dec'][i])
         pix_ra, pix_dec=int(np.rint(app_ra)), int(np.rint(app_dec))
         ra_min, dec_min, ra_max, dec_max = get_box_coord(pix_ra, pix_dec, ref_wcs)
         mask = (df['ra']>=ra_min) & (df['ra']<=ra_max) & (df['dec']>=dec_min) & (df['dec']<=dec_max)
-        density[pix_ra,pix_dec] = mask.sum()
-        # If the mask is empty due to edge effects, we set the density to +1
-        if mask.sum()==0:
-            density[pix_ra,pix_dec] = +1
+        if pix_ra>=0 and pix_ra<=output_map_shape[0] and pix_dec>=0 and pix_dec<=output_map_shape[1]:
+            density[pix_ra,pix_dec] = mask.sum()
+            # If the mask is empty due to edge effects, we set the density to +1
+            if mask.sum()==0:
+                density[pix_ra,pix_dec] = +1
+        else:
+            outside += 1
+    
+    print('---------------------------------------------------------------------------')
+    print(f'Total number of galaxies:{len(df)}')
+    print(f'Number of galaxies within the X-ray image range: {len(df)-outside} ({(len(df)-outside)/len(df)*100:.2f}%)')
+    print(f'Number of galaxies outside the X-ray image range: {outside} ({outside/len(df)*100:.2f}%)')
+    print('---------------------------------------------------------------------------')
+    print('Saving the density map...')
     
     # Save the density map as a FITS file
     hdu = fits.PrimaryHDU(density.T, ref_image.header)
@@ -153,6 +169,7 @@ if method==1:
     print('Density map saved as', output_file)
     
     if wavelet_exp_map:
+        print('Creating and Saving the exposure map...')
         exp = np.ones(output_map_shape)
         hdu_exp = fits.PrimaryHDU(exp.T, ref_image.header)
         hdu_exp.writeto(output_file.replace('.fits', '_exp.fits'), overwrite=True)
